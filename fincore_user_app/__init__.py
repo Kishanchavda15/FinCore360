@@ -1,0 +1,1 @@
+default_app_config ="fincore_user_app.apps.UserFlowConfig"
