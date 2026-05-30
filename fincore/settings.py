@@ -40,7 +40,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
-    "fincore_user_app",
+    "accounts_app",
     "rest_framework",
     "rest_framework_simplejwt",
 ]
@@ -108,7 +108,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-AUTH_USER_MODEL = "fincore_user_app.User"
+AUTH_USER_MODEL = "accounts_app.User"
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/

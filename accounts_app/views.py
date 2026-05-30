@@ -4,8 +4,8 @@ from rest_framework.response import Response
 from rest_framework.status import HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST, HTTP_200_OK
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from fincore_user_app.models import User
-from fincore_user_app.serializer import RegisterUserSerializer, LoginUserSerializer
+from accounts_app.models import User
+from accounts_app.serializer import RegisterUserSerializer, LoginUserSerializer
 
 
 # Create your views here.

@@ -3,7 +3,7 @@ from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.utils import timezone
 
-from fincore_user_app.managers import UserManager
+from accounts_app.managers import UserManager
 
 
 class BaseModel(models.Model):
@@ -15,24 +15,20 @@ class BaseModel(models.Model):
 
 
 class User(AbstractBaseUser, PermissionsMixin, BaseModel):
-
     GENDER_CHOICES = (
         ("male", "Male"),
         ("female", "Female"),
     )
 
     ROLE_CHOICES = (
-        ("admin", "Admin"),
         ("staff", "Staff"),
+        ("admin", "Admin"),
         ("client", "Client"),
     )
 
     full_name = models.CharField(max_length=255, blank=True, null=True)
-
     email = models.EmailField(unique=True)
-
     phone_number = models.CharField(max_length=15)
-
     gender = models.CharField(
         max_length=6,
         choices=GENDER_CHOICES,
@@ -40,7 +36,6 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     )
 
     address = models.TextField(blank=True, null=True)
-
     role = models.CharField(
         max_length=20,
         choices=ROLE_CHOICES,
@@ -67,16 +62,22 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
 
 
 class OtpVerification(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="user")
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="otp_verifications")
     otp = models.CharField(max_length=4)
     is_verify = models.BooleanField(default=False)
     is_used = models.BooleanField(default=False)
     expires_at = models.DateTimeField()
-    create_at=models.DateTimeField(default=timezone.now)
+    create_at = models.DateTimeField(default=timezone.now)
 
     @property
     def is_expired(self):
         return timezone.now() > self.expires_at
 
     def __str__(self):
-        return f"{self.user.email}-{self.otp}"
+        return f"{self.user.email} - {self.otp}"
+
+
+class StaffProfile(BaseModel):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="staff_profiles")
+    address = models.TextField(null=True, blank=True)
+    joining_date = models.DateTimeField(default=timezone.now)

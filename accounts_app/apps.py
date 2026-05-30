@@ -2,7 +2,7 @@ from django.apps import AppConfig
 
 
 class UserFlowConfig(AppConfig):
-    name = "fincore_user_app"
+    name = "accounts_app"
 
     def ready(self):
-        import fincore_user_app.signale
+        import accounts_app.signale

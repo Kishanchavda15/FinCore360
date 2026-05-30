@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from fincore_user_app.models import User
+from accounts_app.models import User
 
 
 # Register your models here.

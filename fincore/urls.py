@@ -18,7 +18,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,include
 
-from fincore_user_app.urls import user_urlpatterns
+from accounts_app.urls import user_urlpatterns
 
 urlpatterns = [
     path("admin/", admin.site.urls),
