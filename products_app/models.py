@@ -1,4 +1,3 @@
-from django.contrib.gis.gdal.prototypes.srs import clone_srs
 from django.db import models
 
 

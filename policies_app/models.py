@@ -54,11 +54,11 @@ class Policy(models.Model):
         ("half_yearly", "Half-Yearly"),
         ("yearly", "Yearly")
     )
-    client = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="policies")
-    staff = models.ForeignKey(StaffProfile, on_delete=models.SET_NULL, related_name="policies")
+    client = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="client_policies")
+    staff = models.ForeignKey(StaffProfile, on_delete=models.SET_NULL,null=True, related_name="staff_managed_policies")
 
-    policy_type = models.ForeignKey(PolicyType, on_delete=models.SET_NULL, related_name="product_type")
-    policy_sub_type = models.ForeignKey(PolicySubType, on_delete=models.SET_NULL, related_name="product_subtype")
+    policy_type = models.ForeignKey(PolicyType, on_delete=models.SET_NULL,null=True, related_name="product_type")
+    policy_sub_type = models.ForeignKey(PolicySubType, on_delete=models.SET_NULL,null=True, related_name="product_subtype")
 
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     installment_frequency = models.CharField(max_length=20, choices=INSTALLMENT_CHOICES, default="monthly")

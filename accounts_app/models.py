@@ -18,6 +18,7 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     GENDER_CHOICES = (
         ("male", "Male"),
         ("female", "Female"),
+        ("other","Other")
     )
 
     ROLE_CHOICES = (
@@ -29,24 +30,12 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     full_name = models.CharField(max_length=255, blank=True, null=True)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15)
-    gender = models.CharField(
-        max_length=6,
-        choices=GENDER_CHOICES,
-        default="male"
-    )
+    gender = models.CharField(max_length=6, choices=GENDER_CHOICES, default="male")
 
     address = models.TextField(blank=True, null=True)
-    role = models.CharField(
-        max_length=20,
-        choices=ROLE_CHOICES,
-        default="client"
-    )
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="client")
 
-    profile_image = models.ImageField(
-        upload_to="user_image/",
-        null=True,
-        blank=True
-    )
+    profile_image = models.ImageField(upload_to="user_image/", null=True, blank=True)
 
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
