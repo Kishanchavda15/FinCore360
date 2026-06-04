@@ -1,6 +1,6 @@
 from django.db import models
 
-from accounts_app.models import StaffProfile
+from accounts_app.models import User
 from clients_app.models import ClientProfile
 
 
@@ -55,7 +55,7 @@ class Policy(models.Model):
         ("yearly", "Yearly")
     )
     client = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="client_policies")
-    staff = models.ForeignKey(StaffProfile, on_delete=models.SET_NULL,null=True, related_name="staff_managed_policies")
+    staff = models.ForeignKey(User, on_delete=models.SET_NULL,null=True, related_name="staff_managed_policies")
 
     policy_type = models.ForeignKey(PolicyType, on_delete=models.SET_NULL,null=True, related_name="product_type")
     policy_sub_type = models.ForeignKey(PolicySubType, on_delete=models.SET_NULL,null=True, related_name="product_subtype")
@@ -73,3 +73,5 @@ class Policy(models.Model):
 
     def __str__(self):
         return f"{self.policy_type.name} - {self.client.user.full_name}"
+
+

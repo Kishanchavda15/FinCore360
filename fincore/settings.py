@@ -41,7 +41,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
 
     "accounts_app.apps.UserFlowConfig",
-    "clients_app",
+    "clients_app.apps.ClientsAppConfig",
     "documents_app",
     "notifications_app",
     "policies_app",

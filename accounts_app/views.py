@@ -1,13 +1,15 @@
 import random
 from django.utils import timezone
-from rest_framework.generics import ListCreateAPIView, GenericAPIView
+from rest_framework.generics import ListCreateAPIView, GenericAPIView, RetrieveUpdateAPIView
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.status import HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST, HTTP_200_OK
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.status import HTTP_202_ACCEPTED
 
 from accounts_app.models import User, OtpVerification
 from accounts_app.serializer import RegisterUserSerializer, LoginUserSerializer, ResetPasswordSerializer, \
-    ForgetPasswordSerializer
+    ForgetPasswordSerializer, UpdateProfileSerializer
 
 
 # Create your views here.
@@ -20,7 +22,8 @@ class RegisterUser(ListCreateAPIView):
         return self.create(request, *args, **kwargs)
 
 
-class LoginUser(GenericAPIView):
+class LoginUser(ListCreateAPIView):
+    queryset = User.objects.all()
     serializer_class = LoginUserSerializer
 
     def post(self, request, *args, **kwargs):
@@ -80,7 +83,6 @@ class ForgotPassword(GenericAPIView):
     serializer_class = ResetPasswordSerializer
 
     def post(self, request, *args, **kwargs):
-
         data = request.data
         serializer = self.serializer_class(data=data)
         serializer.is_valid(raise_exception=True)
@@ -89,12 +91,35 @@ class ForgotPassword(GenericAPIView):
         otp = serializer.validated_data["otp"]
         new_password = serializer.validated_data["new_password"]
 
-
         user.set_password(new_password)
         user.save()
 
         otp.is_used = True
         otp.save()
 
-        return Response({"message":"Password reset successfully"},status=HTTP_200_OK)
+        return Response({"message": "Password reset successfully"}, status=HTTP_200_OK)
 
+
+class UpdateProfile(RetrieveUpdateAPIView):
+    serializer_class = UpdateProfileSerializer
+    permission_classes = [IsAuthenticated]
+
+    def retrieve(self, request, *args, **kwargs):
+        user = request.user
+        serializer = self.serializer_class(user)
+        return Response({"status": True, "message": "Profile fetch successfully", "data": serializer.data},
+                        status=HTTP_202_ACCEPTED)
+
+    def patch(self, request, *args, **kwargs):
+        user = request.user
+        serializer = self.serializer_class(user, data=request.data, partial=True)
+
+        if not serializer.is_valid():
+            return Response(
+                {"status": False,
+                 "message": "update failed",
+                 "errors": serializer.errors}, status=HTTP_400_BAD_REQUEST)
+        serializer.save()
+        return Response(
+            {"status": True,
+             "message": "Profile update successfully."}, status=HTTP_200_OK)

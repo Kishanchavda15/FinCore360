@@ -5,7 +5,7 @@ from django.utils import timezone
 
 from accounts_app.managers import UserManager
 
-
+#time stamp
 class BaseModel(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -13,7 +13,7 @@ class BaseModel(models.Model):
     class Meta:
         abstract = True
 
-
+#staff user
 class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     GENDER_CHOICES = (
         ("male", "Male"),
@@ -24,7 +24,6 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     ROLE_CHOICES = (
         ("staff", "Staff"),
         ("admin", "Admin"),
-        ("client", "Client"),
     )
 
     full_name = models.CharField(max_length=255, blank=True, null=True)
@@ -33,9 +32,10 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     gender = models.CharField(max_length=6, choices=GENDER_CHOICES, default="male")
 
     address = models.TextField(blank=True, null=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="client")
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="staff")
 
     profile_image = models.ImageField(upload_to="user_image/", null=True, blank=True)
+    joining_date = models.DateTimeField(default=timezone.now, blank=True, null=True)
 
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
@@ -66,7 +66,3 @@ class OtpVerification(models.Model):
         return f"{self.user.email} - {self.otp}"
 
 
-class StaffProfile(BaseModel):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="staff_profiles")
-    address = models.TextField(null=True, blank=True)
-    joining_date = models.DateTimeField(default=timezone.now)
