@@ -15,7 +15,9 @@ class ClientCreateApi(ListCreateAPIView):
     permission_classes = [IsAdminOrStaff]
 
     def post(self, request, *args, **kwargs):
+        user = request.user.email
         serializer = self.serializer_class(data=request.data)
+
 
         if serializer.is_valid():
             serializer.save(assigned_staff=request.user)
@@ -36,7 +38,7 @@ class ClientUpdateApi(RetrieveUpdateAPIView):
 
     def patch(self, request, *args, **kwargs):
         user = request.user
-        serializer = self.serializer_class(user)
+        serializer = self.serializer_class(user,data=request.data,partial=True)
 
         if not serializer.is_valid():
             return Response({"status": False,

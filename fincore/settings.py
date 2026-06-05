@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     "documents_app",
     "notifications_app",
     "policies_app",
-    "products_app",
     "dashboard_app",
     "corsheaders",
 

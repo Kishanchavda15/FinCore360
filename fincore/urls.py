@@ -20,10 +20,12 @@ from django.urls import path,include
 
 from accounts_app.urls import user_urlpatterns
 from clients_app.urls import ClientProfile_Urls
+from policies_app.urls import Policy_Urls
 
 urlpatterns = [
     path("auth/", include("rest_framework.urls")),
     path("admin/", admin.site.urls),
     path("",include(user_urlpatterns)),
-    path("",include(ClientProfile_Urls))
+    path("",include(ClientProfile_Urls)),
+    path("",include(Policy_Urls)),
 ]

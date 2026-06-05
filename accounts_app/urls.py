@@ -9,5 +9,5 @@ user_urlpatterns = [
     path("user/login/", LoginUser.as_view()),
     path("user/send-otp/", SendOtp.as_view()),
     path("user/forgot-password/", ForgotPassword.as_view()),
-    path("user/user-update/", UpdateProfile.as_view()),
+    path("user/user-update/<int:pk>/", UpdateProfile.as_view()),
 ]

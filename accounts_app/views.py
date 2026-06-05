@@ -26,6 +26,7 @@ class LoginUser(ListCreateAPIView):
     queryset = User.objects.all()
     serializer_class = LoginUserSerializer
 
+
     def post(self, request, *args, **kwargs):
         data = request.data
         serializer = LoginUserSerializer(data=data)
