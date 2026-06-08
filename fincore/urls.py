@@ -18,14 +18,16 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,include
 
-from accounts_app.urls import user_urlpatterns
+from accounts_app.urls import User_Urls
 from clients_app.urls import ClientProfile_Urls
+from documents_app.url import Documents_Urls
 from policies_app.urls import Policy_Urls
 
 urlpatterns = [
     path("auth/", include("rest_framework.urls")),
     path("admin/", admin.site.urls),
-    path("",include(user_urlpatterns)),
+    path("",include(User_Urls)),
     path("",include(ClientProfile_Urls)),
     path("",include(Policy_Urls)),
+    path("",include(Documents_Urls)),
 ]

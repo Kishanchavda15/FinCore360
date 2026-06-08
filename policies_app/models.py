@@ -70,7 +70,6 @@ class Policy(models.Model):
 
     client = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="client_policies")
     staff = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="staff_managed_policies")
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="created_clients")
 
     amount = models.DecimalField(max_digits=12, decimal_places=2)
 
@@ -86,7 +85,7 @@ class Policy(models.Model):
     def clean(self):
         super().clean()
 
-        # 🔒 Guard clause (important for partial forms / admin / updates)
+        # Guard clause (important for partial forms / admin / updates)
         if not self.product_type or not self.product_subtype:
             return
 
@@ -97,9 +96,3 @@ class Policy(models.Model):
                 "product_subtype": "Invalid product_subtype for selected product_type"
             })
 
-    def save(self, *args, **kwargs):
-        self.full_clean()  # ensures model validation always runs
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f"{self.name} ({self.get_product_type_display()}) - {self.client}"

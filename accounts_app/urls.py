@@ -4,7 +4,7 @@ from rest_framework.routers import DefaultRouter
 
 from accounts_app.views import RegisterUser, LoginUser, SendOtp, ForgotPassword, UpdateProfile
 
-user_urlpatterns = [
+User_Urls = [
     path("user/register/", RegisterUser.as_view()),
     path("user/login/", LoginUser.as_view()),
     path("user/send-otp/", SendOtp.as_view()),
