@@ -42,11 +42,12 @@ INSTALLED_APPS = [
 
     "accounts_app.apps.UserFlowConfig",
     "clients_app.apps.ClientsAppConfig",
-    "documents_app",
-    "notifications_app",
-    "policies_app",
-    "dashboard_app",
+    "documents_app.apps.DocumentsAppConfig",
+    "notifications_app.apps.NotificationsAppConfig",
+    "policies_app.apps.PoliciesAppConfig",
+    "dashboard_app.apps.DashboardAppConfig",
     "corsheaders",
+    "django_celery_beat",
 
 ]
 
@@ -91,9 +92,10 @@ WSGI_APPLICATION = "fincore.wsgi.application"
 #     }
 # }
 DATABASES = {
-    "default": dj_database_url.config(default=config("DATABASE_URL", cast=str))
+    "default": dj_database_url.config(
+        default=config("DATABASE_URL")
+    )
 }
-
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
 
@@ -119,7 +121,7 @@ AUTH_USER_MODEL = "accounts_app.User"
 
 LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = "UTC"
+TIME_ZONE = "Asia/Kolkata"
 
 USE_I18N = True
 
@@ -131,8 +133,13 @@ USE_TZ = True
 STATIC_URL = "static/"
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+
+    # ADDED
+    "DEFAULT_PERMISSION_CLASSES": (
+        "rest_framework.permissions.IsAuthenticated",
     ),
 }
 SIMPLE_JWT = {
@@ -146,7 +153,31 @@ EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 
-EMAIL_HOST_USER = "kchavda0415@gmail.com"
-EMAIL_HOST_PASSWORD = "heuheygbgoagyygq"
+EMAIL_HOST_USER = config(
+    "EMAIL_HOST_USER"
+)
+
+EMAIL_HOST_PASSWORD = config(
+    "EMAIL_HOST_PASSWORD"
+)
 
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+CELERY_BROKER_URL = config(
+    "CELERY_BROKER_URL"
+)
+
+CELERY_RESULT_BACKEND = config(
+    "CELERY_RESULT_BACKEND"
+)
+
+CELERY_ACCEPT_CONTENT = ["json"]
+
+CELERY_TASK_SERIALIZER = "json"
+
+CELERY_RESULT_SERIALIZER = "json"
+
+CELERY_TIMEZONE = TIME_ZONE
+
+
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"

@@ -20,4 +20,4 @@ class Document(models.Model):
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.client.user.full_name} - {self.document_type}"
+        return f"{self.client.full_name} - {self.document_type}"

@@ -5,9 +5,10 @@ class UserManager(BaseUserManager):
 
     def create_user(self, email, password, **extra_field):
         if not email:
-            return ValueError("email is required")
+            raise ValueError("email is required")  # FIXED
+
         if not password:
-            return ValueError("password is required")
+            raise ValueError("password is required")
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_field)
         user.set_password(password)

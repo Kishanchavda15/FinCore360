@@ -16,38 +16,28 @@ class DocumentSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         files = validated_data.pop("file")
 
-        client = validated_data["client"]
-        policy = validated_data.get("policy")
-        document_type = validated_data["document_type"]
-
-        created_docs = []
-
+        docs = []
         for f in files:
-            doc = Document.objects.create(client=client, policy=policy, document_type=document_type, file=f)
-            created_docs.append(doc)
+            docs.append(
+                Document.objects.create(**validated_data, file=f)
+            )
+        return docs
 
-        # IMPORTANT: return first object (DRF compatible)
-        return created_docs[0]
-
-    # ---------------------------
-    # VALIDATION
-    # ---------------------------
     def validate(self, attrs):
-        request = self.context["request"]
+
+        request = self.context.get("request")  # FIXED (safe access)
         user = request.user
 
         client = attrs.get("client")
 
-        # Staff can only upload for assigned clients
+        # IMPORTANT: staff restriction
         if user.role == "staff":
             if client.assigned_staff_id != user.id:
                 raise serializers.ValidationError(
-                    "You can only create documents for your assigned clients.")
+                    "You can only upload documents for your assigned clients."
+                )
 
         return attrs
 
-    # ---------------------------
-    # FIX RESPONSE FOR BULK
-    # ---------------------------
     def to_representation(self, instance):
         return super().to_representation(instance)

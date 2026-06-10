@@ -30,7 +30,7 @@ class LoginUser(ListCreateAPIView):
     def post(self, request, *args, **kwargs):
         data = request.data
         serializer = LoginUserSerializer(data=data)
-        serializer.is_valid()
+        serializer.is_valid(raise_exception=True)
 
         email = serializer.validated_data["email"]
         password = serializer.validated_data["password"]
@@ -40,7 +40,7 @@ class LoginUser(ListCreateAPIView):
         except User.DoesNotExist:
             return Response({"error": "User not found."}, HTTP_404_NOT_FOUND)
         if not user.check_password(password):
-            return Response({"Error": "Password not exist."}, HTTP_400_BAD_REQUEST)
+            return Response({"error": "Invalid password"}, status=HTTP_400_BAD_REQUEST)
 
         refresh = RefreshToken.for_user(user)
         return Response(
@@ -60,7 +60,7 @@ class SendOtp(GenericAPIView):
     def post(self, request, *args, **kwargs):
         data = request.data
         serializer = ForgetPasswordSerializer(data=data)
-        serializer.is_valid()
+        serializer.is_valid(raise_exception=True)
 
         email = serializer.validated_data["email"]
         try:
@@ -104,6 +104,9 @@ class ForgotPassword(GenericAPIView):
 class UpdateProfile(RetrieveUpdateAPIView):
     serializer_class = UpdateProfileSerializer
     permission_classes = [IsAuthenticated]
+
+    def get_object(self):  # FIXED (clean way)
+        return self.request.user
 
     def retrieve(self, request, *args, **kwargs):
         user = request.user

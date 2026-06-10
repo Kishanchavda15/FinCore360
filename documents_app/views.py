@@ -11,15 +11,14 @@ class DocumentListCreateAPI(ListCreateAPIView):
     serializer_class = DocumentSerializer
     permission_classes = [IsAdminOrOwnerStaff]
 
-    # ---------------------------
-    # CREATE (MULTIPLE FILES)
-    # ---------------------------
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(data=request.data,context={"request": request} )
         serializer.is_valid(raise_exception=True)
         instance = serializer.save()
-
-        return Response(self.get_serializer(instance).data, status=201)
+        return Response(
+            DocumentSerializer(instance, many=True).data,
+            status=201
+        )
 
 
 class DocumentRetrieveUpdateDeleteAPI(RetrieveUpdateDestroyAPIView):
@@ -27,23 +26,24 @@ class DocumentRetrieveUpdateDeleteAPI(RetrieveUpdateDestroyAPIView):
     serializer_class = DocumentSerializer
     permission_classes = [IsAdminOrOwnerStaff]
 
-    # ---------------------------
-    # PATCH UPDATE
-    # ---------------------------
+
     def patch(self, request, *args, **kwargs):
         obj = self.get_object()
 
         # object-level permission check
         self.check_object_permissions(request, obj)
-        serializer = self.get_serializer(obj, data=request.data, partial=True)
+
+        serializer = self.get_serializer(
+            obj,
+            data=request.data,
+            partial=True,
+            context={"request": request}  # FIXED
+        )
+
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        instance = serializer.save()
+        return Response(DocumentSerializer(instance, many=True).data, status=201)
 
-        return Response(serializer.data)
-
-    # ---------------------------
-    # DELETE
-    # ---------------------------
     def delete(self, request, *args, **kwargs):
         obj = self.get_object()
         self.check_object_permissions(request, obj)

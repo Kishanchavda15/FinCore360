@@ -83,16 +83,16 @@ class Policy(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def clean(self):
-        super().clean()
+        allowed = self.PRODUCT_MAPPING.get(self.product_type, [])
 
-        # Guard clause (important for partial forms / admin / updates)
-        if not self.product_type or not self.product_subtype:
-            return
+        if self.product_subtype not in allowed:
+            raise ValidationError(
+                {
+                    "product_subtype":
+                        "Invalid product subtype for selected product type."
+                }
+            )
 
-        allowed_subtypes = self.PRODUCT_MAPPING.get(self.product_type, [])
-
-        if self.product_subtype not in allowed_subtypes:
-            raise ValidationError({
-                "product_subtype": "Invalid product_subtype for selected product_type"
-            })
-
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)

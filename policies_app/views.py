@@ -1,10 +1,10 @@
-from django.shortcuts import render
+
 from rest_framework.exceptions import PermissionDenied
-from rest_framework.generics import GenericAPIView, ListCreateAPIView, ListAPIView, RetrieveUpdateDestroyAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 
 from clients_app.models import ClientProfile
+from notifications_app.utility import update_policy_reminders
 from policies_app.permissions import IsAdminOrOwnerStaff
 from policies_app.models import Policy
 from policies_app.serializer import PolicySerializer, PolicyUpdateSerializer
@@ -21,6 +21,7 @@ class PolicyCreateAPI(ListCreateAPIView):
 
     def post(self, request, *args, **kwargs):
         client_id = request.data.get("client")
+
 
         try:
             ClientProfile.objects.get(id=client_id)
@@ -48,9 +49,15 @@ class PolicyRetrieveUpdateDeleteAPI(RetrieveUpdateDestroyAPIView):
         )
 
         serializer.is_valid(raise_exception=True)
+        serializer.is_valid(raise_exception=True)
         serializer.save()
 
+        # NEW
+        update_policy_reminders(policy)
+
         return Response(serializer.data)
+
+
 
     def delete(self, request, *args, **kwargs):
         policy = self.get_object()

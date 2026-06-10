@@ -1,25 +1,20 @@
 from django.db import models
-
-from accounts_app.models import User
+from clients_app.models import ClientProfile
+from policies_app.models import Policy
 
 
 # Create your models here.
 
 class Notification(models.Model):
-    CHANNEL_CHOICES = (
-        ("email", "EMAIL"),
-        # ("telegram", "TELEGRAM"),
-        # ("whatsApp", "WHATSAPP")
-    )
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="notifications")
+    client = models.ForeignKey(ClientProfile, on_delete=models.CASCADE)
+    policy = models.ForeignKey(Policy, on_delete=models.CASCADE)
 
     title = models.CharField(max_length=255)
     message = models.TextField()
 
-    notification_type = models.CharField(max_length=100)
-    channel = models.CharField(max_length=20, choices=CHANNEL_CHOICES,default="email")
+    reminder_date = models.DateTimeField()  # when to trigger
 
-    sent_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.title
+    status = models.CharField(max_length=20, choices=[("pending", "Pending"), ("sent", "Sent"), ("failed", "Failed")],
+                              default="pending")
+    channel = models.CharField(max_length=20, choices=[("email", "Email"), ("telegram", "Telegram"), ])
+    created_at_notification = models.DateTimeField(auto_now_add=True)

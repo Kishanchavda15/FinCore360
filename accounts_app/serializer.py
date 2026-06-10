@@ -10,7 +10,9 @@ class RegisterUserSerializer(serializers.ModelSerializer):
         model = User
         fields = ["id", "full_name", "email", "password", "phone_number", "gender", "address", "role","profile_image"]
 
+
     def create(self, validated_data):
+        validated_data["role"] = "staff"  # FIXED: prevent role abuse
         return User.objects.create_user(**validated_data)
 
 
@@ -38,9 +40,12 @@ class ResetPasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError({"email": "User does not exist. "})
 
         try:
-            otp = OtpVerification.objects.get(user=user, otp=otp, is_used=False)
+            otp_obj = OtpVerification.objects.get(user=user, otp=otp, is_used=False)
         except OtpVerification.DoesNotExist:
-            raise serializers.ValidationError({"otp", "Invalid OTP or OTP not verified."})
+            raise serializers.ValidationError({"otp": "Invalid OTP or OTP not verified."})  # FIXED
+
+        if otp_obj.is_expired:  # ADDED
+            raise serializers.ValidationError({"otp": "OTP expired"})
 
         attrs["user"] = user
         attrs["otp"] = otp
