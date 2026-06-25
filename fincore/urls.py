@@ -22,6 +22,8 @@ from accounts_app.urls import User_Urls
 from clients_app.urls import ClientProfile_Urls
 from documents_app.url import Documents_Urls
 from policies_app.urls import Policy_Urls
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path("auth/", include("rest_framework.urls")),
@@ -31,3 +33,8 @@ urlpatterns = [
     path("",include(Policy_Urls)),
     path("",include(Documents_Urls)),
 ]
+if settings.DEBUG:
+    urlpatterns += static(
+        settings.MEDIA_URL,
+        document_root=settings.MEDIA_ROOT
+    )

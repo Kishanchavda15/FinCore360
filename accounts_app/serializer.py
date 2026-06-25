@@ -20,6 +20,35 @@ class LoginUserSerializer(serializers.Serializer):
     email = serializers.EmailField()
     password = serializers.CharField()
 
+class UserSerializer(serializers.ModelSerializer):
+    profile_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = [
+            "id",
+            "full_name",
+            "email",
+            "phone_number",
+            "gender",
+            "address",
+            "role",
+            "profile_image",
+            "joining_date",
+        ]
+
+    def get_profile_image(self, obj):
+        request = self.context.get("request")
+
+        if not obj.profile_image:
+            return None
+
+        if request:
+            return request.build_absolute_uri(
+                obj.profile_image.url
+            )
+
+        return obj.profile_image.url
 
 class ForgetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -40,15 +69,23 @@ class ResetPasswordSerializer(serializers.Serializer):
             raise serializers.ValidationError({"email": "User does not exist. "})
 
         try:
-            otp_obj = OtpVerification.objects.get(user=user, otp=otp, is_used=False)
+            otp_obj = OtpVerification.objects.get(
+                user=user,
+                otp=otp,
+                is_used=False
+            )
         except OtpVerification.DoesNotExist:
-            raise serializers.ValidationError({"otp": "Invalid OTP or OTP not verified."})  # FIXED
+            raise serializers.ValidationError(
+                {"otp": "Invalid OTP"}
+            )
 
-        if otp_obj.is_expired:  # ADDED
-            raise serializers.ValidationError({"otp": "OTP expired"})
+        if otp_obj.is_expired:
+            raise serializers.ValidationError(
+                {"otp": "OTP expired"}
+            )
 
         attrs["user"] = user
-        attrs["otp"] = otp
+        attrs["otp"] = otp_obj
 
         return attrs
 

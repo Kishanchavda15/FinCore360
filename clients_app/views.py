@@ -8,22 +8,39 @@ from clients_app.serializer import ClientSerializer, ClientUpdateSerializer
 
 
 class ClientCreateApi(ListCreateAPIView):
-    queryset = ClientProfile.objects.all()
     serializer_class = ClientSerializer
     permission_classes = [IsAdminOrStaff]
+
+    def get_queryset(self):
+
+        user = self.request.user
+
+        # Admin sees all clients
+        if user.role == "admin":
+            return ClientProfile.objects.all().order_by("-id")
+
+        # Staff sees only assigned clients
+        return ClientProfile.objects.filter(
+            assigned_staff=user
+        ).order_by("-id")
 
     def post(self, request, *args, **kwargs):
 
         serializer = self.serializer_class(
             data=request.data,
-            context={"request": request}  # FIXED
+            context={"request": request}
         )
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=HTTP_201_CREATED)
+        serializer.is_valid(
+            raise_exception=True
+        )
 
-        return Response(serializer.errors, status=HTTP_400_BAD_REQUEST)
+        client = serializer.save()
+
+        return Response(
+            ClientSerializer(client).data,
+            status=201
+        )
 
 
 class ClientUpdateApi(RetrieveUpdateAPIView):

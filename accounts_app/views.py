@@ -1,7 +1,7 @@
 import random
 from django.utils import timezone
 from rest_framework.generics import ListCreateAPIView, GenericAPIView, RetrieveUpdateAPIView
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.status import HTTP_404_NOT_FOUND, HTTP_400_BAD_REQUEST, HTTP_200_OK
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -9,13 +9,14 @@ from rest_framework.status import HTTP_202_ACCEPTED
 
 from accounts_app.models import User, OtpVerification
 from accounts_app.serializer import RegisterUserSerializer, LoginUserSerializer, ResetPasswordSerializer, \
-    ForgetPasswordSerializer, UpdateProfileSerializer
+    ForgetPasswordSerializer, UpdateProfileSerializer, UserSerializer
 
 
 # Create your views here.
 
 class RegisterUser(ListCreateAPIView):
     queryset = User.objects.all()
+    permission_classes = [AllowAny]
     serializer_class = RegisterUserSerializer
 
     def post(self, request, *args, **kwargs):
@@ -24,8 +25,8 @@ class RegisterUser(ListCreateAPIView):
 
 class LoginUser(ListCreateAPIView):
     queryset = User.objects.all()
+    permission_classes = [AllowAny]
     serializer_class = LoginUserSerializer
-
 
     def post(self, request, *args, **kwargs):
         data = request.data
@@ -46,6 +47,10 @@ class LoginUser(ListCreateAPIView):
         return Response(
             {"Message": "Login successfully .",
              "status": True,
+             "user": UserSerializer(
+                 user,
+                 context={"request": request}
+             ).data,
              "token": {
                  "refresh": str(refresh),
                  "access": str(refresh.access_token)
@@ -56,6 +61,7 @@ class LoginUser(ListCreateAPIView):
 class SendOtp(GenericAPIView):
     queryset = OtpVerification.objects.all()
     serializer_class = ForgetPasswordSerializer
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         data = request.data
@@ -82,6 +88,7 @@ class SendOtp(GenericAPIView):
 class ForgotPassword(GenericAPIView):
     queryset = User.objects.all()
     serializer_class = ResetPasswordSerializer
+    permission_classes = [AllowAny]
 
     def post(self, request, *args, **kwargs):
         data = request.data
@@ -116,14 +123,24 @@ class UpdateProfile(RetrieveUpdateAPIView):
 
     def patch(self, request, *args, **kwargs):
         user = request.user
-        serializer = self.serializer_class(user, data=request.data, partial=True)
 
-        if not serializer.is_valid():
-            return Response(
-                {"status": False,
-                 "message": "update failed",
-                 "errors": serializer.errors}, status=HTTP_400_BAD_REQUEST)
+        serializer = self.serializer_class(
+            user,
+            data=request.data,
+            partial=True
+        )
+
+        serializer.is_valid(raise_exception=True)
         serializer.save()
+
         return Response(
-            {"status": True,
-             "message": "Profile update successfully."}, status=HTTP_200_OK)
+            {
+                "status": True,
+                "message": "Profile updated successfully",
+                "user": UserSerializer(
+                    user,
+                    context={"request": request}
+                ).data
+            },
+            status=HTTP_200_OK
+        )
