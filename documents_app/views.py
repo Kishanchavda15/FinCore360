@@ -1,4 +1,7 @@
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
+from rest_framework.generics import (
+    ListCreateAPIView,
+    RetrieveUpdateDestroyAPIView,
+)
 from rest_framework.response import Response
 
 from documents_app.models import Document
@@ -11,42 +14,44 @@ class DocumentListCreateAPI(ListCreateAPIView):
     serializer_class = DocumentSerializer
     permission_classes = [IsAdminOrOwnerStaff]
 
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data,context={"request": request} )
-        serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
-        return Response(
-            DocumentSerializer(instance, many=True).data,
-            status=201
-        )
+    def get_serializer_context(self):
+        return {"request": self.request}
+
+    def perform_create(self, serializer):
+        serializer.save()
 
 
-class DocumentRetrieveUpdateDeleteAPI(RetrieveUpdateDestroyAPIView):
+class DocumentRetrieveUpdateDeleteAPI(
+    RetrieveUpdateDestroyAPIView
+):
     queryset = Document.objects.all()
     serializer_class = DocumentSerializer
     permission_classes = [IsAdminOrOwnerStaff]
 
+    def get_serializer_context(self):
+        return {"request": self.request}
 
     def patch(self, request, *args, **kwargs):
-        obj = self.get_object()
+        document = self.get_object()
 
-        # object-level permission check
-        self.check_object_permissions(request, obj)
+        self.check_object_permissions(request, document)
 
         serializer = self.get_serializer(
-            obj,
+            document,
             data=request.data,
             partial=True,
-            context={"request": request}  # FIXED
         )
 
         serializer.is_valid(raise_exception=True)
-        instance = serializer.save()
-        return Response(DocumentSerializer(instance, many=True).data, status=201)
+        serializer.save()
+
+        return Response(serializer.data)
 
     def delete(self, request, *args, **kwargs):
-        obj = self.get_object()
-        self.check_object_permissions(request, obj)
-        obj.delete()
+        document = self.get_object()
+
+        self.check_object_permissions(request, document)
+
+        document.delete()
 
         return Response(status=204)

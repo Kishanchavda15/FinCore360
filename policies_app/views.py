@@ -15,20 +15,33 @@ from policies_app.serializer import PolicySerializer, PolicyUpdateSerializer
 
 
 class PolicyCreateAPI(ListCreateAPIView):
-    queryset = Policy.objects.all()
     serializer_class = PolicySerializer
     permission_classes = [IsAdminOrOwnerStaff]
 
+    # ✅ IMPORTANT
+    def get_queryset(self):
+        user = self.request.user
+
+        if user.role == "admin":
+            return Policy.objects.all().order_by("-id")
+
+        return Policy.objects.filter(
+            staff=user
+        ).order_by("-id")
+
     def post(self, request, *args, **kwargs):
         client_id = request.data.get("client")
-
 
         try:
             ClientProfile.objects.get(id=client_id)
         except ClientProfile.DoesNotExist:
             raise PermissionDenied("Client not found")
 
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(
+            data=request.data,
+            context={"request": request},
+        )
+
         serializer.is_valid(raise_exception=True)
         serializer.save(staff=request.user)
 

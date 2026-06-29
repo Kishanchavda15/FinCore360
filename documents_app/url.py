@@ -6,6 +6,6 @@ from documents_app.views import (
 )
 
 Documents_Urls = [
-    path("document/", DocumentListCreateAPI.as_view(), name="document-create-list"),
-    path("document/<int:pk>/", DocumentRetrieveUpdateDeleteAPI.as_view(), name="document-detail"),
+    path("document/", DocumentListCreateAPI.as_view()),
+    path("document/<int:pk>/", DocumentRetrieveUpdateDeleteAPI.as_view()),
 ]

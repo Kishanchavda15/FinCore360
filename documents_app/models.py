@@ -16,6 +16,7 @@ class Document(models.Model):
     policy = models.ForeignKey(Policy, on_delete=models.CASCADE, null=True, blank=True)
 
     document_type = models.CharField(max_length=20, choices=DOCTYPE)
+
     file = models.FileField(upload_to="documents/")
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
