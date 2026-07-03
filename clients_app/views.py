@@ -1,6 +1,7 @@
+from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateAPIView
 from rest_framework.response import Response
-from rest_framework.status import *
+from rest_framework import status
 
 from clients_app.models import ClientProfile
 from clients_app.permissions import IsAdminOrStaff
@@ -10,6 +11,20 @@ from clients_app.serializer import ClientSerializer, ClientUpdateSerializer
 class ClientCreateApi(ListCreateAPIView):
     serializer_class = ClientSerializer
     permission_classes = [IsAdminOrStaff]
+    queryset = ClientProfile.objects.all()
+    filter_backends = [
+        SearchFilter,
+        OrderingFilter,
+    ]
+
+    ordering = ["-id"]
+
+    search_fields = [
+        "full_name",
+        "email",
+        "phone_number",
+        "city",
+    ]
 
     def get_queryset(self):
 
@@ -39,7 +54,7 @@ class ClientCreateApi(ListCreateAPIView):
 
         return Response(
             ClientSerializer(client).data,
-            status=201
+            status=status.HTTP_201_CREATED
         )
 
 
@@ -55,7 +70,7 @@ class ClientUpdateApi(RetrieveUpdateAPIView):
             "status": True,
             "message": "Client fetched successfully",
             "data": serializer.data
-        }, status=HTTP_200_OK)
+        }, status=status.HTTP_200_OK)
 
     def patch(self, request, *args, **kwargs):
 
@@ -73,4 +88,4 @@ class ClientUpdateApi(RetrieveUpdateAPIView):
         return Response({
             "status": True,
             "message": "Client updated successfully"
-        }, status=HTTP_200_OK)
+        }, status=status.HTTP_200_OK)

@@ -21,6 +21,7 @@ from django.urls import path,include
 from accounts_app.urls import User_Urls
 from clients_app.urls import ClientProfile_Urls
 from documents_app.url import Documents_Urls
+from notifications_app.urls import Notification_Urls
 from policies_app.urls import Policy_Urls
 from django.conf import settings
 from django.conf.urls.static import static
@@ -32,6 +33,7 @@ urlpatterns = [
     path("",include(ClientProfile_Urls)),
     path("",include(Policy_Urls)),
     path("",include(Documents_Urls)),
+    path ("",include(Notification_Urls))
 ]
 if settings.DEBUG:
     urlpatterns += static(

@@ -1,5 +1,6 @@
-
+from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.exceptions import PermissionDenied
+from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.response import Response
 
@@ -18,7 +19,26 @@ class PolicyCreateAPI(ListCreateAPIView):
     serializer_class = PolicySerializer
     permission_classes = [IsAdminOrOwnerStaff]
 
-    # ✅ IMPORTANT
+    # ✅ ENABLE SEARCH FILTER (for ?search=)
+    filter_backends = [SearchFilter, DjangoFilterBackend]
+
+    search_fields = [
+        "name",
+        "product_type",
+        "product_subtype",
+        "status",
+        "installment_frequency",
+        "client__email",
+    ]
+
+    filterset_fields = [
+        "status",
+        "product_type",
+    ]
+
+    # =========================
+    # ROLE BASED DATA
+    # =========================
     def get_queryset(self):
         user = self.request.user
 
@@ -29,23 +49,16 @@ class PolicyCreateAPI(ListCreateAPIView):
             staff=user
         ).order_by("-id")
 
-    def post(self, request, *args, **kwargs):
-        client_id = request.data.get("client")
+    # =========================
+    # CREATE POLICY
+    # =========================
+    def perform_create(self, serializer):
+        client_id = self.request.data.get("client")
 
-        try:
-            ClientProfile.objects.get(id=client_id)
-        except ClientProfile.DoesNotExist:
-            raise PermissionDenied("Client not found")
+        if not ClientProfile.objects.filter(id=client_id).exists():
+            raise ValueError("Client not found")
 
-        serializer = self.get_serializer(
-            data=request.data,
-            context={"request": request},
-        )
-
-        serializer.is_valid(raise_exception=True)
-        serializer.save(staff=request.user)
-
-        return Response(serializer.data, status=201)
+        serializer.save(staff=self.request.user)
 
 class PolicyRetrieveUpdateDeleteAPI(RetrieveUpdateDestroyAPIView):
     queryset = Policy.objects.all()
@@ -61,7 +74,6 @@ class PolicyRetrieveUpdateDeleteAPI(RetrieveUpdateDestroyAPIView):
             partial=True
         )
 
-        serializer.is_valid(raise_exception=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
