@@ -22,10 +22,9 @@ class User(AbstractBaseUser, PermissionsMixin, BaseModel):
     )
 
     ROLE_CHOICES = (
-        ("staff", "Staff"),
         ("admin", "Admin"),
+        ("staff", "Staff"),
     )
-
     full_name = models.CharField(max_length=255, blank=True, null=True)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15)
@@ -64,5 +63,23 @@ class OtpVerification(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.otp}"
+
+class PendingRegistration(models.Model):
+    full_name = models.CharField(max_length=255)
+    email = models.EmailField()
+    phone_number = models.CharField(max_length=15)
+    gender = models.CharField(max_length=10, choices=User.GENDER_CHOICES, default="male")
+    address = models.TextField(blank=True, null=True)
+
+    password = models.CharField(max_length=255)  # temporary store (hashed recommended)
+
+    secret_key = models.CharField(max_length=20, unique=True)
+
+    is_verified = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.email
 
 

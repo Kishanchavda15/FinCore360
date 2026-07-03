@@ -199,32 +199,58 @@ class VerifySecretKey(APIView):
         email = request.data.get("email")
         secret_key = request.data.get("secret_key")
 
+        if not email or not secret_key:
+            return Response(
+                {"error": "Email and secret key are required"},
+                status=HTTP_400_BAD_REQUEST
+            )
+
         try:
             pending = PendingRegistration.objects.get(
                 email=email,
                 secret_key=secret_key,
+                is_verified=False  # Only get unverified ones
             )
         except PendingRegistration.DoesNotExist:
-            return Response({"error": "Invalid email or secret key"}, status=HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Invalid email or secret key"},
+                status=HTTP_400_BAD_REQUEST
+            )
 
-        # create real user
-        user = User.objects.create_user(
-            email=pending.email,
-            full_name=pending.full_name,
-            phone_number=pending.phone_number,
-            gender=pending.gender,
-            address=pending.address,
-            password=pending.password
-        )
+        # Check if user already exists
+        if User.objects.filter(email=pending.email).exists():
+            pending.delete()
+            return Response(
+                {"error": "User with this email already exists"},
+                status=HTTP_400_BAD_REQUEST
+            )
 
-        pending.delete()
+        try:
+            # Create real user - the password is stored in the pending record
+            user = User.objects.create_user(
+                email=pending.email,
+                full_name=pending.full_name,
+                phone_number=pending.phone_number,
+                gender=pending.gender,
+                address=pending.address,
+                password=pending.password  # This will be hashed by create_user
+            )
 
-        return Response({
-            "status": True,
-            "message": "User created successfully"
-        }, status=HTTP_200_OK)
+            # Mark as verified and delete pending record
+            pending.is_verified = True
+            pending.save()
+            pending.delete()
 
+            return Response({
+                "status": True,
+                "message": "User created successfully"
+            }, status=HTTP_200_OK)
 
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to create user: {str(e)}"},
+                status=HTTP_400_BAD_REQUEST
+            )
 # ======================================================
 # 3. LOGIN API (UNCHANGED)
 # ======================================================
@@ -237,10 +263,22 @@ class LoginUser(ListCreateAPIView):
         email = request.data.get("email")
         password = request.data.get("password")
 
+        if not email or not password:
+            return Response(
+                {"error": "Email and password are required"},
+                status=HTTP_400_BAD_REQUEST
+            )
+
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
             return Response({"error": "User not found"}, status=HTTP_404_NOT_FOUND)
+
+        if not user.is_active:
+            return Response(
+                {"error": "Account is deactivated"},
+                status=HTTP_400_BAD_REQUEST
+            )
 
         if not user.check_password(password):
             return Response({"error": "Invalid password"}, status=HTTP_400_BAD_REQUEST)
@@ -291,6 +329,9 @@ class SendOtp(GenericAPIView):
 # ======================================================
 # 5. FORGOT PASSWORD (UNCHANGED)
 # ======================================================
+# ======================================================
+# 5. FORGOT PASSWORD (FIXED)
+# ======================================================
 class ForgotPassword(GenericAPIView):
     queryset = User.objects.all()
     serializer_class = ResetPasswordSerializer
@@ -300,17 +341,52 @@ class ForgotPassword(GenericAPIView):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
-        user = serializer.validated_data["user"]
-        otp = serializer.validated_data["otp"]
-        new_password = serializer.validated_data["new_password"]
+        email = serializer.validated_data.get("email")
+        otp_code = serializer.validated_data.get("otp")
+        new_password = serializer.validated_data.get("new_password")
 
+        # Get the user
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response(
+                {"error": "User with this email does not exist"},
+                status=HTTP_400_BAD_REQUEST
+            )
+
+        # Verify OTP
+        try:
+            otp_record = OtpVerification.objects.get(
+                user=user,
+                otp=otp_code,
+                is_used=False,
+                is_verify=False
+            )
+        except OtpVerification.DoesNotExist:
+            return Response(
+                {"error": "Invalid OTP code"},
+                status=HTTP_400_BAD_REQUEST
+            )
+
+        # Check if OTP is expired
+        if otp_record.is_expired:
+            return Response(
+                {"error": "OTP has expired"},
+                status=HTTP_400_BAD_REQUEST
+            )
+
+        # Update password
         user.set_password(new_password)
         user.save()
 
-        otp.is_used = True
-        otp.save()
+        # Mark OTP as used
+        otp_record.is_used = True
+        otp_record.save()
 
-        return Response({"message": "Password reset successfully"}, status=HTTP_200_OK)
+        return Response({
+            "status": True,
+            "message": "Password reset successfully"
+        }, status=HTTP_200_OK)
 
 
 # ======================================================

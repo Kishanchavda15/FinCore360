@@ -1,3 +1,4 @@
+from django.contrib.auth.hashers import make_password
 from rest_framework import serializers
 from accounts_app.models import User, OtpVerification, PendingRegistration
 
@@ -52,8 +53,37 @@ class ForgetPasswordSerializer(serializers.Serializer):
 class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField(max_length=4)
-    new_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=6)
 
+    def validate(self, data):
+        email = data.get("email")
+        otp = data.get("otp")
+
+        # Check if user exists
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({"email": "User with this email does not exist"})
+
+        # Check if OTP exists and is valid
+        try:
+            otp_record = OtpVerification.objects.get(
+                user=user,
+                otp=otp,
+                is_used=False,
+                is_verify=False
+            )
+        except OtpVerification.DoesNotExist:
+            raise serializers.ValidationError({"otp": "Invalid OTP code"})
+
+        # Check if OTP is expired
+        if otp_record.is_expired:
+            raise serializers.ValidationError({"otp": "OTP has expired"})
+
+        data['user'] = user
+        data['otp_record'] = otp_record
+
+        return data
 
 class UpdateProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -66,6 +96,8 @@ class UpdateProfileSerializer(serializers.ModelSerializer):
 # NEW SERIALIZER (PENDING REGISTRATION)
 # ======================================================
 class PendingRegisterSerializer(serializers.ModelSerializer):
+    confirm_password = serializers.CharField(write_only=True, required=False)
+
     class Meta:
         model = PendingRegistration
         fields = [
@@ -74,5 +106,31 @@ class PendingRegisterSerializer(serializers.ModelSerializer):
             "phone_number",
             "gender",
             "address",
-            "password"
+            "password",
+            "confirm_password"
         ]
+        extra_kwargs = {
+            'password': {'write_only': True}
+        }
+
+    def validate(self, data):
+        # Check if email already exists in User model
+        if User.objects.filter(email=data.get('email')).exists():
+            raise serializers.ValidationError({"email": "User with this email already exists."})
+
+        # Check if email already exists in PendingRegistration
+        if PendingRegistration.objects.filter(email=data.get('email'), is_verified=False).exists():
+            raise serializers.ValidationError({"email": "Registration already pending for this email."})
+
+        return data
+
+    def create(self, validated_data):
+        # Remove confirm_password if it exists
+        validated_data.pop('confirm_password', None)
+
+        # Hash the password before saving
+        validated_data['password'] = make_password(validated_data['password'])
+
+        # Create the pending registration
+        pending = PendingRegistration.objects.create(**validated_data)
+        return pending
