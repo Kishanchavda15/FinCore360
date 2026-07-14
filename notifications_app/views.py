@@ -32,7 +32,7 @@ class NotificationListAPI(ListAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        qs = Notification.objects.select_related("client", "policy").order_by("-reminder_date")
+        qs = Notification.objects.select_related("client", "policy").order_by("-id")
         if user.role == "admin":
             return qs
         return qs.filter(policy__client__assigned_staff=user)
