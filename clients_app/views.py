@@ -27,7 +27,6 @@ class ClientCreateApi(ListCreateAPIView):
     ]
 
     def get_queryset(self):
-
         user = self.request.user
 
         # Admin sees all clients
@@ -39,32 +38,22 @@ class ClientCreateApi(ListCreateAPIView):
             assigned_staff=user
         ).order_by("-id")
 
-    def post(self, request, *args, **kwargs):
-
-        serializer = self.serializer_class(
-            data=request.data,
-            context={"request": request}
-        )
-
-        serializer.is_valid(
-            raise_exception=True
-        )
-
-        client = serializer.save()
-
-        return Response(
-            ClientSerializer(client).data,
-            status=status.HTTP_201_CREATED
-        )
+    def perform_create(self, serializer):
+        # Auto-assign staff if user is staff
+        if self.request.user.role == 'staff':
+            serializer.save(assigned_staff=self.request.user)
+        else:
+            serializer.save()
 
 
 class ClientUpdateApi(RetrieveUpdateAPIView):
     queryset = ClientProfile.objects.all()
     serializer_class = ClientUpdateSerializer
+    permission_classes = [IsAdminOrStaff]
 
     def retrieve(self, request, *args, **kwargs):
         client = self.get_object()
-        serializer = self.serializer_class(client)
+        serializer = self.get_serializer(client)
 
         return Response({
             "status": True,
@@ -73,19 +62,17 @@ class ClientUpdateApi(RetrieveUpdateAPIView):
         }, status=status.HTTP_200_OK)
 
     def patch(self, request, *args, **kwargs):
-
-        client = self.get_object()  # FIXED (important)
-
-        serializer = self.serializer_class(
+        client = self.get_object()
+        serializer = self.get_serializer(
             client,
             data=request.data,
             partial=True
         )
-
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
         return Response({
             "status": True,
-            "message": "Client updated successfully"
+            "message": "Client updated successfully",
+            "data": serializer.data
         }, status=status.HTTP_200_OK)

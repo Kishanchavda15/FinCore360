@@ -3,32 +3,10 @@ from django.core.exceptions import ValidationError
 
 from accounts_app.models import User
 from clients_app.models import ClientProfile
+from products_app.models import Product, ProductType
 
 
 class Policy(models.Model):
-    PRODUCT_TYPE_CHOICES = (
-        ("loan", "Loan"),
-        ("insurance", "Insurance"),
-        ("finance", "Finance"),
-    )
-
-    PRODUCT_SUBTYPE_CHOICES = (
-        ("home_loan", "Home Loan"),
-        ("gold_loan", "Gold Loan"),
-        ("personal_loan", "Personal Loan"),
-        ("education_loan", "Education Loan"),
-
-        ("health_insurance", "Health Insurance"),
-        ("vehicle_insurance", "Vehicle Insurance"),
-        ("life_insurance", "Life Insurance"),
-        ("travel_insurance", "Travel Insurance"),
-
-        ("consumer_finance", "Consumer Finance"),
-        ("business_finance", "Business Finance"),
-        ("asset_finance", "Asset Finance"),
-        ("project_finance", "Project Finance"),
-    )
-
     STATUS_CHOICES = (
         ("active", "Active"),
         ("completed", "Completed"),
@@ -41,32 +19,19 @@ class Policy(models.Model):
         ("yearly", "Yearly"),
     )
 
-    # Clean mapping (class-level constant, not recreated every save)
-    PRODUCT_MAPPING = {
-        "loan": [
-            "home_loan",
-            "gold_loan",
-            "personal_loan",
-            "education_loan",
-        ],
-        "insurance": [
-            "health_insurance",
-            "vehicle_insurance",
-            "life_insurance",
-            "travel_insurance",
-        ],
-        "finance": [
-            "consumer_finance",
-            "business_finance",
-            "asset_finance",
-            "project_finance",
-        ],
-    }
-
     name = models.CharField(max_length=255)
 
-    product_type = models.CharField(max_length=20, choices=PRODUCT_TYPE_CHOICES)
-    product_subtype = models.CharField(max_length=50, choices=PRODUCT_SUBTYPE_CHOICES)
+    # Changed to ForeignKey – now dynamic!
+    product_type = models.ForeignKey(
+        ProductType,
+        on_delete=models.PROTECT,  # Prevent deletion if used in policies
+        related_name="policies"
+    )
+    product_subtype = models.ForeignKey(
+        Product,
+        on_delete=models.PROTECT,
+        related_name="policies"
+    )
 
     client = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="client_policies")
     staff = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="staff_managed_policies")
@@ -83,16 +48,16 @@ class Policy(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def clean(self):
-        allowed = self.PRODUCT_MAPPING.get(self.product_type, [])
-
-        if self.product_subtype not in allowed:
-            raise ValidationError(
-                {
-                    "product_subtype":
-                        "Invalid product subtype for selected product type."
-                }
-            )
+        # Validate that the subtype belongs to the selected type
+        if self.product_type and self.product_subtype:
+            if self.product_subtype.product_type != self.product_type:
+                raise ValidationError({
+                    "product_subtype": "This product subtype does not belong to the selected product type."
+                })
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.name} - {self.product_type.name}"

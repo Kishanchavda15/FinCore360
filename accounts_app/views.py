@@ -12,7 +12,8 @@ from rest_framework.status import HTTP_202_ACCEPTED
 
 from accounts_app.models import User, OtpVerification, PendingRegistration
 from accounts_app.serializer import RegisterUserSerializer, LoginUserSerializer, ResetPasswordSerializer, \
-    ForgetPasswordSerializer, UpdateProfileSerializer, UserSerializer, PendingRegisterSerializer
+    ForgetPasswordSerializer, UpdateProfileSerializer, UserSerializer, PendingRegisterSerializer, \
+    ChangePasswordSerializer
 from accounts_app.utils import generate_secret_key
 from fincore import settings
 
@@ -180,7 +181,7 @@ Secret Key: {secret_key}
 Share this key with user to approve registration.
 """,
             from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=["admin@gmail.com"]
+            recipient_list=[pending.email]
         )
 
         return Response({
@@ -209,7 +210,7 @@ class VerifySecretKey(APIView):
             pending = PendingRegistration.objects.get(
                 email=email,
                 secret_key=secret_key,
-                is_verified=False  # Only get unverified ones
+                is_verified=False
             )
         except PendingRegistration.DoesNotExist:
             return Response(
@@ -226,14 +227,14 @@ class VerifySecretKey(APIView):
             )
 
         try:
-            # Create real user - the password is stored in the pending record
+            # ✅ Create user with plain password
             user = User.objects.create_user(
                 email=pending.email,
                 full_name=pending.full_name,
                 phone_number=pending.phone_number,
                 gender=pending.gender,
                 address=pending.address,
-                password=pending.password  # This will be hashed by create_user
+                password=pending.password  # Plain password
             )
 
             # Mark as verified and delete pending record
@@ -243,7 +244,8 @@ class VerifySecretKey(APIView):
 
             return Response({
                 "status": True,
-                "message": "User created successfully"
+                "message": "User created successfully",
+                "user": UserSerializer(user, context={"request": request}).data
             }, status=HTTP_200_OK)
 
         except Exception as e:
@@ -409,4 +411,17 @@ class UpdateProfile(RetrieveUpdateAPIView):
             "status": True,
             "message": "Profile updated",
             "user": UserSerializer(user, context={"request": request}).data
+        }, status=HTTP_200_OK)
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({
+            "status": True,
+            "message": "Password changed successfully."
         }, status=HTTP_200_OK)

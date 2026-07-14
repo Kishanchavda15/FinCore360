@@ -30,7 +30,7 @@ class ClientProfile(BaseModel):
     city = models.CharField(max_length=20, null=True,blank=True)
     pincode = models.PositiveIntegerField(null=True,blank=True)
     state = models.CharField(null=True,blank=True)
-
+    role = models.CharField(default="client")
 
 
     def __str__(self):

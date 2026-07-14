@@ -14,6 +14,7 @@ from pathlib import Path
 import dj_database_url
 from decouple import config
 import logging
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -46,6 +47,7 @@ INSTALLED_APPS = [
     "notifications_app.apps.NotificationsAppConfig",
     "policies_app.apps.PoliciesAppConfig",
     "dashboard_app.apps.DashboardAppConfig",
+    "products_app",
     "corsheaders",
     "django_celery_beat",
     "django_filters",
@@ -142,18 +144,17 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": (
         "rest_framework.permissions.IsAuthenticated",
     ),
-    #FILTER
+    # FILTER
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
         "rest_framework.filters.SearchFilter",
         "rest_framework.filters.OrderingFilter",
     ],
 
-
 }
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=3),
+    "ACCESS_TOKEN_LIFETIME": timedelta(days=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=90),
 }
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
@@ -182,13 +183,12 @@ Replace the broker/backend URLs with your actual Redis (or RabbitMQ) URL.
 # ---------------------------------------------------------------------------
 # Celery
 # ---------------------------------------------------------------------------
-
-CELERY_BROKER_URL = "redis://localhost:6379/0"  # or rabbitmq://
+CELERY_BROKER_URL = "redis://localhost:6379/0"
 CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = "UTC"  # match USE_TZ = True
+CELERY_TIMEZONE = "UTC"
 
 # Required so Celery uses Django's timezone support
 CELERY_ENABLE_UTC = True
@@ -196,16 +196,13 @@ CELERY_ENABLE_UTC = True
 # ---------------------------------------------------------------------------
 # Celery Beat – Periodic tasks
 # ---------------------------------------------------------------------------
-
-from celery.schedules import crontab  # noqa: E402
+# Celery Beat Schedule
+from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
-    # Runs every minute: picks up any notification whose reminder_date has passed
     "send-pending-notifications-every-minute": {
         "task": "notifications_app.send_pending_notifications",
-        "schedule": 60.0,  # seconds  →  every 1 minute
-        # Alternative: run at :00 of every hour
-        # "schedule": crontab(minute=0),
+        "schedule": 60.0,  # every 60 seconds
     },
 }
 
@@ -216,11 +213,19 @@ LOGGING = {
         "console": {
             "class": "logging.StreamHandler",
         },
+        "file": {
+            "class": "logging.FileHandler",
+            "filename": "notifications.log",
+        },
     },
     "loggers": {
         "notifications_app": {
-            "handlers": ["console"],
-            "level": "ERROR",
+            "handlers": ["console", "file"],
+            "level": "INFO",
+        },
+        "celery": {
+            "handlers": ["console", "file"],
+            "level": "INFO",
         },
     },
 }

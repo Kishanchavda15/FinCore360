@@ -122,15 +122,45 @@ class PendingRegisterSerializer(serializers.ModelSerializer):
         if PendingRegistration.objects.filter(email=data.get('email'), is_verified=False).exists():
             raise serializers.ValidationError({"email": "Registration already pending for this email."})
 
+        # Check if password and confirm_password match
+        password = data.get('password')
+        confirm_password = data.get('confirm_password')
+        if password and confirm_password and password != confirm_password:
+            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
+
         return data
 
     def create(self, validated_data):
         # Remove confirm_password if it exists
         validated_data.pop('confirm_password', None)
 
-        # Hash the password before saving
-        validated_data['password'] = make_password(validated_data['password'])
+        # ✅ DON'T HASH HERE - store plain password
+        # The password will be hashed when creating the actual user
 
         # Create the pending registration
         pending = PendingRegistration.objects.create(**validated_data)
         return pending
+
+# Add at the end of the file
+
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=8)
+    confirm_password = serializers.CharField(write_only=True, min_length=8)
+
+    def validate_old_password(self, value):
+        user = self.context['request'].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Old password is incorrect.")
+        return value
+
+    def validate(self, data):
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError({"confirm_password": "Passwords do not match."})
+        return data
+
+    def save(self, **kwargs):
+        user = self.context['request'].user
+        user.set_password(self.validated_data['new_password'])
+        user.save()
+        return user

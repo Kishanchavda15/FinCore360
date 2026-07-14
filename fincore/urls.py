@@ -25,6 +25,7 @@ from notifications_app.urls import Notification_Urls
 from policies_app.urls import Policy_Urls
 from django.conf import settings
 from django.conf.urls.static import static
+from products_app.urls import Product_Urls
 
 urlpatterns = [
     path("auth/", include("rest_framework.urls")),
@@ -33,7 +34,8 @@ urlpatterns = [
     path("",include(ClientProfile_Urls)),
     path("",include(Policy_Urls)),
     path("",include(Documents_Urls)),
-    path ("",include(Notification_Urls))
+    path ("",include(Notification_Urls)),
+    path ("",include(Product_Urls))
 ]
 if settings.DEBUG:
     urlpatterns += static(
