@@ -13,9 +13,9 @@ from rest_framework.generics import ListAPIView, RetrieveAPIView
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from clients_app.pagination import PageList
 from notifications_app.models import Notification
 from notifications_app.serializers import NotificationSerializer
-from notifications_app.tasks import send_single_notification
 from policies_app.permissions import IsAdminOrOwnerStaff
 
 # Import the dispatch function from tasks
@@ -29,6 +29,7 @@ class NotificationListAPI(ListAPIView):
     """GET /notifications/"""
     serializer_class = NotificationSerializer
     permission_classes = [IsAdminOrOwnerStaff]
+    pagination_class = PageList
 
     def get_queryset(self):
         user = self.request.user

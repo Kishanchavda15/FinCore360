@@ -5,6 +5,7 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 from rest_framework.response import Response
 
 from clients_app.models import ClientProfile
+from clients_app.pagination import PageList
 from notifications_app.utility import update_policy_reminders
 from policies_app.permissions import IsAdminOrOwnerStaff
 from policies_app.models import Policy
@@ -14,6 +15,7 @@ from policies_app.serializer import PolicySerializer, PolicyUpdateSerializer
 class PolicyCreateAPI(ListCreateAPIView):
     serializer_class = PolicySerializer
     permission_classes = [IsAdminOrOwnerStaff]
+    pagination_class = PageList
 
     filter_backends = [SearchFilter, DjangoFilterBackend]
 

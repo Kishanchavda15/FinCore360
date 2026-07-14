@@ -1,8 +1,10 @@
 from rest_framework.filters import SearchFilter, OrderingFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateAPIView
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 from rest_framework import status
 
+from clients_app.pagination import PageList
 from clients_app.models import ClientProfile
 from clients_app.permissions import IsAdminOrStaff
 from clients_app.serializer import ClientSerializer, ClientUpdateSerializer
@@ -11,6 +13,8 @@ from clients_app.serializer import ClientSerializer, ClientUpdateSerializer
 class ClientCreateApi(ListCreateAPIView):
     serializer_class = ClientSerializer
     permission_classes = [IsAdminOrStaff]
+    pagination_class = PageList
+
     queryset = ClientProfile.objects.all()
     filter_backends = [
         SearchFilter,

@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 from datetime import timedelta
+from mmap import PAGESIZE
 from pathlib import Path
 import dj_database_url
 from decouple import config
@@ -123,11 +124,8 @@ AUTH_USER_MODEL = "accounts_app.User"
 # https://docs.djangoproject.com/en/6.0/topics/i18n/
 
 LANGUAGE_CODE = "en-us"
-
 TIME_ZONE = "Asia/Kolkata"
-
 USE_I18N = True
-
 USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
@@ -161,12 +159,8 @@ EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = config(
-    "EMAIL_HOST_USER"
-)
-EMAIL_HOST_PASSWORD = config(
-    "EMAIL_HOST_PASSWORD"
-)
+EMAIL_HOST_USER = config("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # CELERY_BROKER_URL = config(
@@ -197,7 +191,6 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 # ---------------------------------------------------------------------------
 # Celery Beat Schedule
 from celery.schedules import crontab
-
 
 CELERY_BEAT_SCHEDULE = {
     "send-notifications-every-minute": {

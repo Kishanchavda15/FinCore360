@@ -3,8 +3,10 @@ from rest_framework.generics import (
     ListCreateAPIView,
     RetrieveUpdateDestroyAPIView,
 )
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
+from clients_app.pagination import PageList
 from documents_app.models import Document
 from documents_app.serializer import DocumentSerializer
 from policies_app.permissions import IsAdminOrOwnerStaff
@@ -20,6 +22,7 @@ from policies_app.permissions import IsAdminOrOwnerStaff
 class DocumentListCreateAPI(ListCreateAPIView):
     serializer_class = DocumentSerializer
     permission_classes = [IsAdminOrOwnerStaff]
+    pagination_class = PageList
 
     filter_backends = [SearchFilter]
 
