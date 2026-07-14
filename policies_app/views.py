@@ -1,3 +1,4 @@
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.filters import SearchFilter
 from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView
@@ -44,6 +45,12 @@ class PolicyCreateAPI(ListCreateAPIView):
         client_id = self.request.data.get("client")
         if not ClientProfile.objects.filter(id=client_id).exists():
             raise ValueError("Client not found")
+        print("=" * 60)
+        print("POLICY CREATE API CALLED")
+        print("Time:", timezone.now())
+        print("User:", self.request.user)
+        print("Data:", self.request.data)
+        print("=" * 60)
         serializer.save(staff=self.request.user)
 
 

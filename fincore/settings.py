@@ -183,15 +183,14 @@ Replace the broker/backend URLs with your actual Redis (or RabbitMQ) URL.
 # ---------------------------------------------------------------------------
 # Celery
 # ---------------------------------------------------------------------------
-CELERY_BROKER_URL = "redis://localhost:6379/0"
-CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
+CELERY_BROKER_URL = "redis://127.0.0.1:6379/0"
+CELERY_RESULT_BACKEND = "redis://127.0.0.1:6379/0"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
-CELERY_TIMEZONE = "UTC"
-
-# Required so Celery uses Django's timezone support
+CELERY_TIMEZONE = "Asia/Kolkata"
 CELERY_ENABLE_UTC = True
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 
 # ---------------------------------------------------------------------------
 # Celery Beat – Periodic tasks
@@ -199,16 +198,18 @@ CELERY_ENABLE_UTC = True
 # Celery Beat Schedule
 from celery.schedules import crontab
 
+
 CELERY_BEAT_SCHEDULE = {
-    "send-pending-notifications-every-minute": {
+    "send-notifications-every-minute": {
         "task": "notifications_app.send_pending_notifications",
-        "schedule": 60.0,  # every 60 seconds
+        "schedule": crontab(minute="*"),
     },
 }
 
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
+
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
@@ -218,14 +219,22 @@ LOGGING = {
             "filename": "notifications.log",
         },
     },
+
+    "root": {
+        "handlers": ["console"],
+        "level": "INFO",
+    },
+
     "loggers": {
         "notifications_app": {
             "handlers": ["console", "file"],
             "level": "INFO",
+            "propagate": False,
         },
         "celery": {
             "handlers": ["console", "file"],
             "level": "INFO",
+            "propagate": False,
         },
     },
 }
